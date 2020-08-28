@@ -1,0 +1,118 @@
+[#start-minikube]
+**Configure and Start Minikube**
+
+Before installing Knative and its components, we need to create a Minikube virtual machine and deploy Kubernetes into it.
+
+Download https://kubernetes.io/docs/setup/minikube[minikube] and add it to your path.
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+$TUTORIAL_HOME/bin/start-minikube.sh
+----
+
+.Minikube starting
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+❌  profile "{tutorial-namespace}" not found
+✅  Created a new profile : {tutorial-namespace}
+✅  minikube profile was successfully set to {tutorial-namespace}
+😄  [{tutorial-namespace}] minikube v1.12.1 on Darwin 10.15.6
+✨  Automatically selected the hyperkit driver
+👍  Starting control plane node {tutorial-namespace} in cluster {tutorial-namespace}
+🔥  Creating hyperkit VM (CPUs=4, Memory=8192MB, Disk=51200MB) ...
+🐳  Preparing Kubernetes v1.18.3 on Docker 19.03.12 ...
+🔎  Verifying Kubernetes components...
+🌟  Enabled addons: default-storageclass, storage-provisioner
+🏄  Done! kubectl is now configured to use "{tutorial-namespace}"
+----
+
+Switch to the new minikube profile *{tutorial-namespace}*, so that all your commands gets executed in the right context:
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+minikube profile {tutorial-namespace}
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+✅  minikube profile was successfully set to {tutorial-namespace}
+----
+
+**Deploy Registry Helper**
+
+To enable pushing and pulling container images from local internal minikube registry, we will deploy the minikube https://github.com/kubernetes/minikube/tree/master/deploy/addons/registry-aliases[registry-aliases] addon:
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+minikube addons enable registry && minikube addons enable registry-aliases
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+🔎  Verifying registry addon...
+🌟  The 'registry' addon is enabled
+🌟  The 'registry-aliases' addon is enabled
+----
+
+The registry-aliases addon should allow you to build local container images with names like:
+
+- example.com/foo/bar
+- example.org/foo/bar
+- test.com/foo/bar
+- test.org/foo/bar
+
+The images build with the example.org, example.com, test.com and test.org will then be pushed and pulled from local internal registry, which was enable using minkube `registry` addon.
+
+[#deploy-tekton]
+*Deploy Tekton Pipelines*
+
+To deploy the Tekton pipelines:
+
+[.console-input]
+[source,bash,subs="+macros,attributes+"]
+----
+kubectl apply --filename \
+https://github.com/tektoncd/pipeline/releases/download/{tekton-version}/release.yaml
+----
+
+[NOTE]
+======
+It will take few mins for the Tekton pipeline components to be installed, you an watch the status using the command:
+
+[.console-input]
+[source,bash,subs="+macros,attributes+"]
+----
+watch kubectl get pods -n tekton-pipelines
+----
+
+You can use kbd:[Ctrl+c] to terminate the watch
+======
+
+A successful deployment of Tekton pipelines will show the following pods:
+
+[.console-output]
+[source,bash]
+-----
+NAME                                           READY   STATUS    AGE
+tekton-pipelines-controller-849ccccd7f-gc6dp   1/1     Running   85s
+tekton-pipelines-webhook-75bc7666c-9crwq       1/1     Running   85s
+-----
+
+include::partial$tekton-cli.adoc[]
+**Configuring Kubernetes namespace**
+
+All the tutorial exercises will be deployed in namespace called `{tutorial-namespace}`:
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl create namespace {tutorial-namespace} &&\
+kubectl config set-context --current --namespace={tutorial-namespace}
+----
+

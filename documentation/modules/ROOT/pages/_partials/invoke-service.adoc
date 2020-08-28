@@ -1,0 +1,42 @@
+#tag::env[]
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+export IP_ADDRESS="$(minikube ip):$(kubectl get svc kourier-external --namespace kourier-system --output 'jsonpath={.spec.ports[?(@.port==80)].nodePort}')"
+----
+
+#end::env[]
+
+#tag::call[]
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+http $IP_ADDRESS 'Host:greeter.tektontutorial.example.com'
+----
+
+#end::call[]
+
+
+#tag::workshop-call[]
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+export SVC_URL=`oc get rt greeter -o yaml | yq read - 'status.url'` && \
+http $SVC_URL
+----
+
+#end::workshop-call[]
+
+#tag::workshop-call-params[]
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+export SVC_URL=`oc get rt greeter -o yaml | yq read - 'status.url'` && \
+http $SVC_URL/{svc-params}
+----
+
+#end::workshop-call-params[]
